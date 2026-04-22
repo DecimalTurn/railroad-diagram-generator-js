@@ -234,11 +234,35 @@ class ABNFParser {
      * @returns {Map<string, ParsedRule>} Parsed rules with original ABNF and AST
      */
     parse(abnfContent) {
+        // Extract inline comments from the source (map line number to comment text)
+        this.lineComments = this._extractLineComments(abnfContent);
+        
         // Tokenize the entire file once, preserving all context
         const tokens = this.tokenizer.tokenize(abnfContent);
         
         // Parse the token stream to identify rules
         return this._parseTokenStream(tokens, abnfContent);
+    }
+
+    /**
+     * Extract inline comments from ABNF content, mapping line number to comment text
+     * @param {string} content - ABNF file content
+     * @returns {Map<number, string>} Map of line number (1-based) to comment text (without leading ';')
+     * @private
+     */
+    _extractLineComments(content) {
+        const comments = new Map();
+        const lines = content.split(/\r?\n/);
+        
+        lines.forEach((line, index) => {
+            const lineNum = index + 1; // 1-based line numbers
+            const commentMatch = line.match(/;\s*(.*)$/);
+            if (commentMatch) {
+                comments.set(lineNum, commentMatch[1]);
+            }
+        });
+        
+        return comments;
     }
 
     /**
@@ -272,8 +296,10 @@ class ABNFParser {
                 index = ruleTokens.nextIndex;
                 
                 try {
+                    this.currentRuleName = ruleName;
                     // Parse the rule expression from its tokens
                     const expression = this._parseTokenSequence(ruleTokens.tokens);
+                    this.currentRuleName = null;
                     
 
                     
@@ -287,6 +313,7 @@ class ABNFParser {
                     });
                     
                 } catch (error) {
+                    this.currentRuleName = null;
                     // Re-throw with rule context
                     if (error instanceof ABNFParseError) {
                         throw error; // Already has position info
@@ -523,13 +550,16 @@ class ABNFParser {
         }
 
         const token = tokens[index];
+        const label = this.currentRuleName === 'char' && this.lineComments
+            ? this.lineComments.get(token.line)
+            : null;
 
         switch (token.type) {
             case 'string':
             case 'sstring':
                 // Terminal string - preserve literal ABNF syntax
                 return {
-                    element: new TerminalNode(token.value),
+                    element: new TerminalNode(token.value, label),
                     nextIndex: index + 1
                 };
 
@@ -544,7 +574,7 @@ class ABNFParser {
             case 'decval':
                 // Hex or decimal values - preserve literal ABNF syntax
                 return {
-                    element: new TerminalNode(token.value),
+                    element: new TerminalNode(token.value, label),
                     nextIndex: index + 1
                 };
 

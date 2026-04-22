@@ -27,14 +27,16 @@ class ASTNode {
 class TerminalNode extends ASTNode {
     /**
      * @param {string} text - The terminal text
+     * @param {string} [label] - Optional label/description for the terminal
      */
-    constructor(text) {
+    constructor(text, label = null) {
         super('terminal');
         this.text = text;
+        this.label = label;
     }
 
     toString() {
-        return `{Terminal text=${this.text}}`;
+        return `{Terminal text=${this.text}${this.label ? ` label=${this.label}` : ''}}`;
     }
 }
 
