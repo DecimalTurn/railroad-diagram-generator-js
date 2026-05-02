@@ -30,10 +30,14 @@ class TerminalElement extends TextBoxElement {
             const labelPadding = 12;
             const boxHeightPixels = 2 * ctx.gridSize;
 
-            const labelX = this.width * ctx.gridSize + labelPadding;
+            const isUnicodePlaceholderLabel = this.label === 'U+XXXX';
+            const labelX = isUnicodePlaceholderLabel
+                ? this.width * ctx.gridSize + 2
+                : this.width * ctx.gridSize + labelPadding;
             const labelY = boxHeightPixels / 2 - 6;
+            const labelAnchor = 'start';
 
-            ctx.svg += `<text x="${labelX}" y="${labelY}" text-anchor="start" dominant-baseline="middle" class="terminal-label" font-size="${labelFontSize}" fill="#555">${ctx.escapeXml(this.label)}</text>`;
+            ctx.svg += `<text x="${labelX}" y="${labelY}" text-anchor="${labelAnchor}" dominant-baseline="middle" class="terminal-label" font-size="${labelFontSize}" fill="#555">${ctx.escapeXml(this.label)}</text>`;
         }
     }
 

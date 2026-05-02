@@ -266,6 +266,22 @@ class ABNFParser {
     }
 
     /**
+     * Remove a leading token from an inline char annotation so the terminal box
+     * and label do not repeat the same visible text.
+     * @param {string | null | undefined} comment - Inline comment text
+     * @returns {string | null} Trimmed label text or null when nothing remains
+     * @private
+     */
+    _extractCharLabel(comment) {
+        if (!comment) {
+            return null;
+        }
+
+        const trimmed = comment.replace(/^\s*\S+\s*/, '').trim();
+        return trimmed || null;
+    }
+
+    /**
      * Parse a token stream to extract rules using lookahead
      * @param {Token[]} tokens - Array of all tokens from the file
      * @param {string} originalContent - Original file content for error context
@@ -551,7 +567,7 @@ class ABNFParser {
 
         const token = tokens[index];
         const label = this.currentRuleName === 'char' && this.lineComments
-            ? this.lineComments.get(token.line)
+            ? this._extractCharLabel(this.lineComments.get(token.line))
             : null;
 
         switch (token.type) {
