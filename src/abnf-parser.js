@@ -278,7 +278,8 @@ class ABNFParser {
         }
 
         const trimmed = comment.replace(/^\s*\S+\s*/, '').trim();
-        return trimmed || null;
+        const wrapped = trimmed.replace(/\s+(U\+[0-9A-Fa-fX]+)\s*$/, '\n$1');
+        return wrapped || null;
     }
 
     /**

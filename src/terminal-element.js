@@ -26,18 +26,40 @@ class TerminalElement extends TextBoxElement {
         
         // Add label to the right of the terminal for annotated char alternatives.
         if (this.label) {
-            const labelFontSize = 10;
+            const labelFontSize = 12;
             const labelPadding = 12;
             const boxHeightPixels = 2 * ctx.gridSize;
 
             const isUnicodePlaceholderLabel = this.label === 'U+XXXX';
             const labelX = isUnicodePlaceholderLabel
-                ? this.width * ctx.gridSize + 2
+                ? this.width * ctx.gridSize - 10
                 : this.width * ctx.gridSize + labelPadding;
-            const labelY = boxHeightPixels / 2 - 6;
+            const labelY = boxHeightPixels / 2 - 13;
             const labelAnchor = 'start';
 
-            ctx.svg += `<text x="${labelX}" y="${labelY}" text-anchor="${labelAnchor}" dominant-baseline="middle" class="terminal-label" font-size="${labelFontSize}" fill="#555">${ctx.escapeXml(this.label)}</text>`;
+            // Keep long Unicode suffixes compact by rendering the U+ token on a new line.
+            let labelLines = this.label.split(/\r?\n/);
+            if (labelLines.length === 1) {
+                const autoWrapMatch = this.label.match(/^(.*?)(\s+U\+[0-9A-Fa-fX]+)$/);
+                if (autoWrapMatch) {
+                    labelLines = [autoWrapMatch[1].trim(), autoWrapMatch[2].trim()];
+                }
+            }
+
+            if (labelLines.length <= 1) {
+                ctx.svg += `<text x="${labelX}" y="${labelY}" text-anchor="${labelAnchor}" dominant-baseline="middle" class="terminal-label">${ctx.escapeXml(this.label)}</text>`;
+            } else {
+                const lineHeight = labelFontSize;
+                const multiLineStartY = labelY - ((labelLines.length - 1) * lineHeight) / 2;
+                const tspanLines = labelLines
+                    .map((line, index) => {
+                        const dy = index === 0 ? 0 : lineHeight;
+                        return `<tspan x="${labelX}" dy="${dy}">${ctx.escapeXml(line)}</tspan>`;
+                    })
+                    .join('');
+
+                ctx.svg += `<text x="${labelX}" y="${multiLineStartY}" text-anchor="${labelAnchor}" dominant-baseline="middle" class="terminal-label">${tspanLines}</text>`;
+            }
         }
     }
 
