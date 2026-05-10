@@ -58,7 +58,12 @@ class TextBoxElement extends LayoutElement {
         
         // Convert text width to grid units with padding
         const textWidthInGrids = Math.ceil(textMetrics.width / gridSize);
-        const minWidth = textWidthInGrids + 2; // Add padding (1 grid unit each side)
+        let minWidth = textWidthInGrids + 2; // Add padding (1 grid unit each side)
+        
+        // Add extra padding for "comment" rule to improve spacing
+        if (this.displayText === 'comment') {
+            minWidth += 2; // Add additional 2 grid units (1 on each side)
+        }
         
         this.width = Math.max(4, minWidth + (minWidth % 2)); // Round up to nearest even number, minimum 4
         this.height = 2; // Fixed height of 2 grid units for proper track connection
